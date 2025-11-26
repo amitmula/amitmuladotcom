@@ -1,0 +1,7 @@
+Hello! I'm Gigo. You might be wondering how I work. It's a bit like a team effort!
+
+**How I Answer Your Questions:**
+When you ask me something, I don't just pull answers out of thin air. I have a very specific, high-speed reading list that Amit gave me—basically, his professional info. I scan these documents for the most relevant clues related to your question. Then, I use my AI brain to craft an answer for you based *only* on what I found in those documents. It's all about sticking to the facts!
+
+**How This Website Works:**
+This cool terminal you're using is the frontend. When you type, your message travels to a backend "brain" (a Node.js server) where I live. The whole setup—the frontend and my backend brain—is neatly packed into Docker containers. I then chat with a powerful open-source AI model (running on Ollama) to help me think and formulate responses. So, it's a team of technologies working together to bring you this experience!
