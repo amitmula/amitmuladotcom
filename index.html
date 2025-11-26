@@ -86,7 +86,7 @@
                 <div class="w-3 h-3 bg-[#27C93F] rounded-full"></div>
             </div>
             <div class="flex-grow text-center text-sm text-gray-400">
-                amitmula@portfolio -- /bin/bash
+                guest@amitmula.com -- /bin/bash
             </div>
             <div class="w-16"></div> <!-- Spacer -->
         </div>
@@ -100,7 +100,7 @@
             <!-- Input Prompt Area (Fixed for Alignment) -->
             <div class="flex items-baseline mt-2"> 
                 <!-- Prompt parts are kept simple and inline -->
-                <span class="prompt">guest@portfolio</span>
+                <span class="prompt">guest@amitmula.com</span>
                 <span class="text-gray-400">:</span>
                 <span class="path">~</span>
                 <span class="text-gray-400 mr-2">$</span> <!-- Added mr-2 for spacing before input -->
@@ -116,82 +116,68 @@
 
     <script>
         const outputContainer = document.getElementById('output-container');
-        const commandInput = document.getElementById('command-input'); 
-        const terminalBody = document.getElementById('terminal-body'); 
-        let commandHistory = [];
+        const commandInput = document.getElementById('command-input');
+        const terminalBody = document.getElementById('terminal-body');
 
-        // --- NEW: Add event listener for keydown (Fixes function not called) ---
+        // --- Event Listeners ---
         commandInput.addEventListener('keydown', handleInput);
+        terminalBody.addEventListener('click', () => commandInput.focus());
 
-        // --- NEW: Click listener to focus input ---
-        terminalBody.addEventListener('click', (e) => {
-            // Don't focus if they're clicking a link or a command
-            if (e.target.classList.contains('command')) {
-                return;
-            }
-            commandInput.focus();
-        });
-
-        // --- NEW: Handle input from user ---
+        // --- Core Input Handler ---
         function handleInput(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                const commandName = commandInput.value.trim();
-                
-                if (commandName) {
-                    appendCommandOutput(commandName);
+                const prompt = commandInput.value.trim();
+                commandInput.value = ''; // Clear input immediately
+
+                if (prompt) {
+                    // Display the prompt the user typed
+                    appendUserPrompt(prompt);
+                    // Call the AI with the prompt
+                    callAI(prompt);
                 } else {
-                    // Append just a prompt if they hit enter on empty (FIXED STRUCTURE)
-                    const promptLine = `
-                        <div class="flex items-baseline">
-                            <span class="prompt">guest@portfolio</span>
-                            <span class="text-gray-400">:</span>
-                            <span class="path">~</span>
-                            <span class="text-gray-400 mr-2">$</span>
-                        </div>
-                    `;
-                    outputContainer.innerHTML += promptLine;
+                    // If the user presses enter on an empty line, just show the prompt
+                    appendUserPrompt(prompt);
                 }
                 
-                commandInput.value = ''; // Clear input
-                terminalBody.scrollTop = terminalBody.scrollHeight; // Scroll to bottom
+                scrollToBottom();
             }
         }
         
-        // --- NEW: Function to call the AI backend ---
-        async function callAI(prompt) {
-            // Add the user's prompt line to the output
+        function appendUserPrompt(prompt) {
             const promptLine = `
                 <div class="flex items-baseline">
-                    <span class="prompt">guest@portfolio</span>
+                    <span class="prompt">guest@amitmula.com</span>
                     <span class="text-gray-400">:</span>
                     <span class="path">~</span>
                     <span class="text-gray-400 mr-2">$</span>
-                    <span class="ml-0">ai ${prompt}</span>
+                    <span class="ml-0">${escapeHtml(prompt)}</span>
                 </div>
             `;
             outputContainer.innerHTML += promptLine;
+        }
 
+        // --- AI Backend Function ---
+        async function callAI(prompt) {
             // Create a container for the AI's streaming response
             const responseContainer = document.createElement('div');
-            responseContainer.classList.add('mb-4', 'text-gray-300'); // Added text color
+            responseContainer.classList.add('mb-4', 'text-gray-300');
             outputContainer.appendChild(responseContainer);
             
             // Initial placeholder
             responseContainer.innerHTML = '<p>🧠 Thinking...</p>';
-            terminalBody.scrollTop = terminalBody.scrollHeight;
+            scrollToBottom();
 
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // Send the prompt and specify the model if you want
-                    body: JSON.stringify({ prompt: prompt, model: 'llama3' }) 
+                    body: JSON.stringify({ prompt: prompt }) 
                 });
 
                 if (!response.ok || !response.body) {
                     const errorText = await response.text();
-                    responseContainer.innerHTML = `<p class="text-red-400">Error: ${errorText || response.statusText}</p>`;
+                    responseContainer.innerHTML = `<p class="text-red-400">Error: ${escapeHtml(errorText) || response.statusText}</p>`;
                     return;
                 }
                 
@@ -201,14 +187,12 @@
                 const decoder = new TextDecoder();
                 let buffer = '';
 
-                // Read the stream
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
                     buffer += decoder.decode(value, { stream: true });
                     
-                    // The stream sends JSON objects separated by newlines (JSONL)
                     let boundary = buffer.indexOf('\n');
                     while (boundary !== -1) {
                         const jsonStr = buffer.substring(0, boundary);
@@ -218,10 +202,9 @@
                             try {
                                 const chunk = JSON.parse(jsonStr);
                                 if (chunk.response) {
-                                    // Sanitize and append the response chunk to prevent HTML injection
                                     const textNode = document.createTextNode(chunk.response);
                                     responseContainer.appendChild(textNode);
-                                    terminalBody.scrollTop = terminalBody.scrollHeight;
+                                    scrollToBottom();
                                 }
                                 if (chunk.error) {
                                     const errorNode = document.createElement('p');
@@ -230,7 +213,6 @@
                                     responseContainer.appendChild(errorNode);
                                 }
                             } catch (e) {
-                                // This might happen if a chunk is malformed
                                 console.error('Failed to parse JSON chunk:', jsonStr);
                             }
                         }
@@ -241,227 +223,39 @@
                 console.error('Error calling AI service:', error);
                 responseContainer.innerHTML = '<p class="text-red-400">Error: Could not connect to the AI service. Is it running?</p>';
             } finally {
-                // Ensure scroll is at the bottom after streaming is complete
-                terminalBody.scrollTop = terminalBody.scrollHeight;
+                scrollToBottom();
             }
-        }
-
-
-        // Define the content for each command
-        const commands = {
-            'welcome': {
-                description: "Shows the welcome message.",
-                content: `
-                    <div class="mb-4">
-                        <div class="text-xl sm:text-2xl font-bold text-green-400">Welcome to my Interactive Portfolio</div>
-                        <p class="mt-2">This is the personal website of Amit Mula, A Software Engineer by choice!</p>
-                        <p>This entire site is a simulated terminal. How cool is that?</p>
-                        <br>
-                        <p>Click '<span class="command" onclick="runCommand('help')">help</span>' or type 'help' below to see a list of available commands.</p>
-                    </div>
-                `
-            },
-            'help': {
-                description: "Lists all available commands.",
-                content: '' // Dynamically populated below
-            },
-            'about': {
-                description: "Learn more about me.",
-                content: `
-                    <div class="mb-4">
-                        <p class="font-bold text-green-400">Executing: ./get-bio.sh</p>
-                        <p class="mt-2">Hello! I'm Amit.</p>
-                        <p>I'm a full-stack software engineer with a passion for building elegant, efficient, and scalable solutions. I specialize in React, Node.js, and cloud-native architectures (AWS/GCP). I thrive on complex problems and love turning a good idea into a great product.</p>
-                        <br>
-                        <p class="font-bold text-green-400">Core Technologies:</p>
-                        <ul class="list-disc list-inside ml-2">
-                            <li>JavaScript/TypeScript (React, Node.js, Next.js)</li>
-                            <li>Java (Spring Boot, Microservices)</li>
-			    <li>Python (Django, Flask)</li>
-                            <li>Databases (PostgreSQL, MongoDB, Redis)</li>
-                            <li>Cloud & DevOps (Docker, Kubernetes, AWS, Terraform)</li>
-                        </ul>
-                    </div>
-                `
-            },
-            'projects': {
-                description: "View my recent work.",
-                content: `
-                    <div class="mb-4">
-                        <p class="font-bold text-green-400">Querying project database...</p>
-                        
-                        <div class="mt-4 border border-gray-700 rounded p-3">
-                            <p class="font-bold text-lg"><span class="text-blue-400">[Project-01]</span> QuantumLeap AI</p>
-                            <p class="text-sm mt-1">A SaaS platform for data visualization powered by a custom machine learning model. Built with Next.js, FastAPI, and deployed on Vercel.</p>
-                            <p class="mt-2">
-                                <a href="#" target="_blank" class="command">[Live Demo]</a> 
-                                <a href="#" target="_blank" class="command">[GitHub]</a>
-                            </p>
-                        </div>
-
-                        <div class="mt-4 border border-gray-700 rounded p-3">
-                            <p class="font-bold text-lg"><span class="text-blue-400">[Project-02]</span> Echo-Realtime Chat</p>
-                            <p class="text-sm mt-1">A high-performance, low-latency chat application using WebSockets and a Go backend. Features E2E encryption.</p>
-                            <p class="mt-2">
-                                <a href="#" target="_blank" class="command">[GitHub]</a>
-                            </p>
-                        </div>
-
-                        <div class="mt-4 border border-gray-700 rounded p-3">
-                            <p class="font-bold text-lg"><span class="text-blue-400">[Project-03]</span> CLI-Toolkit.js</p>
-                            <p class="text-sm mt-1">An open-source Node.js library for building beautiful and interactive command-line applications. Published on npm.</p>
-                            <p class="mt-2">
-                                <a href="#" target="_blank" class="command">[npm]</a> 
-                                <a href="#" target="_blank" class="command">[GitHub]</a>
-                            </p>
-                        </div>
-                    </div>
-                `
-            },
-            'contact': {
-                description: "Get in touch.",
-                content: `
-                    <div class="mb-4">
-                        <p class="font-bold text-green-400">Fetching contact vectors...</p>
-                        <ul class="mt-2">
-                            <li><span class="text-blue-400 font-medium">Email:</span> <a href="mailto:consult@amitmula.com" class="command">consult@amitmula.com</a></li>
-                            <li><span class="text-blue-400 font-medium">LinkedIn:</span> <a href="#" target="_blank" class="command">linkedin.com/in/amitmula</a></li>
-                            <li><span class="text-blue-400 font-medium">GitHub:</span> <a href="#" target="_blank" class="command">github.com/amitmula</a></li>
-                        </ul>
-                        <p class="mt-4">Feel free to reach out. I'm always open to new opportunities and interesting problems.</p>
-                    </div>
-                `
-            },
-            'resume': {
-                description: "Downloads my resume.",
-                content: `
-                    <div class="mb-4">
-                        <p class="font-bold text-green-400">Initiating file transfer...</p>
-                        <p>Downloading <span class="text-yellow-400">Amit_Mula_Resume.pdf</span>...</p>
-                        <p class="mt-2">Your download should start automatically. If not, <a href="#" class="command" id="resume-link">[click here]</a>.</p>
-                    </div>
-                `
-            },
-            'clear': {
-                description: "Clears the terminal screen.",
-                content: '' // This is handled specially
-            },
-            'ai': {
-                description: "Talk to the AI assistant. Usage: ai &lt;prompt&gt;",
-                content: '' // Handled by the callAI function
-            }
-        };
-
-        // Dynamically build the help content 
-        (function buildHelpContent() {
-            // Use a specific order for help output
-            const commandOrder = ['help', 'ai', 'about', 'projects', 'contact', 'resume', 'clear'];
-            
-            let helpList = commandOrder.map(commandName => {
-                const command = commands[commandName];
-                if (command) {
-                    return `<li><span class="command" onclick="runCommand('${commandName}')">${commandName}</span><span class="text-gray-500"> - ${command.description}</span></li>`;
-                }
-                return ''; // Handle if a command in order is missing
-            }).join('');
-            
-            commands.help.content = `
-                <div class="mb-4">
-                    <p class="font-bold text-green-400">Available Commands:</p>
-                    <ul class="mt-2">
-                        ${helpList}
-                    </ul>
-                </div>
-            `;
-        })(); // Self-invoking function to build it immediately
-
-        // This function is for CLICKABLE commands
-        function runCommand(commandName) {
-            // Manually set input and trigger 'Enter' to keep a consistent flow
-            commandInput.value = commandName;
-            const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-            commandInput.dispatchEvent(enterEvent);
-            commandInput.focus(); // Re-focus
         }
         
-        // This function adds the command output to the screen
-        function appendCommandOutput(commandName) {
-            const commandLower = commandName.toLowerCase();
-            
-            // Handle 'clear' command
-            if (commandLower === 'clear') {
-                commandHistory = [];
-                outputContainer.innerHTML = '';
-       
-         // After clearing, show the welcome message without the prompt
-                outputContainer.innerHTML += commands['welcome'].content;
-                terminalBody.scrollTop = terminalBody.scrollHeight;
-                return;
-            }
-
-            // Handle 'ai' command
-            if (commandLower.startsWith('ai ')) {
-                const prompt = commandName.substring(3).trim();
-                if (prompt) {
-                    callAI(prompt);
-                } else {
-                     outputContainer.innerHTML += `
-                        <div class="mb-4">
-                           <p>Usage: ai &lt;your prompt&gt;</p>
-                        </div>
-                    `;
-                }
-                return;
-            }
-
-            // Add the "prompt" line for the command that was run (FIXED STRUCTURE)
-            const promptLine = `
-                <div class="flex items-baseline">
-                    <span class="prompt">guest@portfolio</span>
-                    <span class="text-gray-400">:</span>
-                    <span class="path">~</span>
-                    <span class="text-gray-400 mr-2">$</span>
-                    <span class="ml-0">${commandName}</span>
+        function showWelcomeMessage() {
+            outputContainer.innerHTML = `
+                <div class="mb-4">
+                    <div class="text-xl sm:text-2xl font-bold text-green-400">Welcome to Amit Mula's Interactive website</div>
+                    <p class="mt-2">Hello! I'm Gigo, AI assistant for Amit's website.</p>
+                    <p>I can help you learn more about Amit</p>
+                    <br>
+                    <p>Just type your question below and press Enter!</p>
                 </div>
             `;
-            outputContainer.innerHTML += promptLine;
-
-            const command = commands[commandLower];
-
-            if (command) {
-                // Add the command's content output
-                outputContainer.innerHTML += command.content;
-                
-                // Special handling for resume to trigger download
-                if (commandLower === 'resume') {
-                    // In a real scenario, you'd replace '#' with the actual path to the PDF
-                    const resumeLink = document.getElementById('resume-link');
-                    if (resumeLink) {
-                        resumeLink.href = 'resume.pdf'; // <-- IMPORTANT: SET THIS
-                        resumeLink.download = 'Amit_Mula_Resume.pdf';
-                        // Automatically click the link to start download
-                        // resumeLink.click(); // This might be blocked by browsers
-                    }
-                }
-            } else {
-                // Handle "command not found"
-                outputContainer.innerHTML += `
-                    <div class="mb-4">
-                        <p>bash: command not found: <span class="text-red-400">${commandName}</span></p>
-                        <p>Type 'help' to see the list of available commands.</p>
-                    </div>
-                `;
-            }
-            
-            // Scroll to the bottom
+        }
+        
+        function scrollToBottom() {
             terminalBody.scrollTop = terminalBody.scrollHeight;
         }
 
-        // Run the 'welcome' command on page load
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
+        // --- On Page Load ---
         window.onload = () => {
-            // Just add the content, not the prompt line (Prevents dangling text)
-            outputContainer.innerHTML += commands['welcome'].content;
-            commandInput.focus(); // Focus the input on load
+            showWelcomeMessage();
+            commandInput.focus();
         };
     </script>
 

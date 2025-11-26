@@ -23,14 +23,13 @@ app.use(express.json());
 // --- RAG Setup ---
 let retriever;
 let llm;
-const conversationHistory = []; // Global conversation history, as in rag.js
+const conversationHistory = [];
 
 // --- Configuration ---
 const VECTOR_STORE_PATH = path.join(__dirname, "hnswlib_index");
-// Using the IP from server.js as it's likely for the Docker environment
-const OLLAMA_BASE_URL = "http://host.docker.internal:11434"; 
-const EMBEDDING_MODEL = "nomic-embed-text"; // From rag.js
-const LLM_MODEL = "hf.co/LiquidAI/LFM2-1.2B-RAG-GGUF:Q4_K_M"; // From rag.js
+const OLLAMA_BASE_URL = "http://host.docker.internal:11434";
+const EMBEDDING_MODEL = "nomic-embed-text";
+const LLM_MODEL = "hf.co/LiquidAI/LFM2-1.2B-RAG-GGUF:Q4_K_M";
 
 // --- Document Loading ---
 async function loadDocs() {
@@ -56,7 +55,7 @@ async function initializeRAG() {
         console.log("Checking for existing vector store...");
         if (fs.existsSync(VECTOR_STORE_PATH)) {
             console.log("Loading vector store from disk...");
-            const embeddings = new OllamaEmbeddings({ 
+            const embeddings = new OllamaEmbeddings({
                 model: EMBEDDING_MODEL,
                 baseUrl: OLLAMA_BASE_URL 
             });
@@ -111,7 +110,7 @@ app.post('/api/chat', async (req, res) => {
     if (!prompt) {
         return res.status(400).send({ error: 'Prompt is required' });
     }
-    
+
     // If RAG is not ready, fall back to a simple LLM call
     if (!retriever || !llm) {
         console.warn("RAG not initialized. Falling back to simple LLM response.");

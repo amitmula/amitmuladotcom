@@ -5,7 +5,6 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: amit_mula_frontend
     ports:
-      # Map container port 80 to host port 8080
       - "8080:80"
     restart: unless-stopped
     healthcheck:
@@ -15,7 +14,6 @@ services:
       retries: 3
     depends_on:
       - backend
-
   backend:
     build:
       context: .
@@ -24,4 +22,3 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # No ports are exposed to the host, communication happens internally via the Nginx proxy
