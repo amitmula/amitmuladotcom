@@ -1,0 +1,75 @@
+Amit Mula Full Stack & Cloud-Native Solutions Developer Toronto,
+Ontario, Canada
+
+Phone: +1 437-882-4154 Email: amitmula@gmail.com LinkedIn:
+linkedin.com/in/amitmula
+
+Summary Software engineer with more than 12 years of experience in
+designing and developing scalable, distributed systems. Extensive
+hands-on experience with public cloud platforms, enabling
+cost-efficient, cloud-native architectures leveraging serverless
+functions, event-driven interfaces, and streaming data pipelines.
+Certified Google Cloud Professional Cloud Architect with strong
+proficiency in the modern JavaScript ecosystem (Node.js, React.js).
+Skilled in building microservices-based distributed systems,
+implementing reactive patterns, and handling cross-cutting concerns such
+as authorization, serialization, versioning, logging, metrics
+instrumentation, and messaging. Highly proficient in object-oriented and
+functional programming paradigms. Strong Core Java expertise, including
+multithreading, collections, generics, exception handling, and
+serialization. Experienced in building RESTful services, applying GoF
+design patterns, containerization (Docker), and orchestration
+(Kubernetes). Familiar with infrastructure tooling such as Consul,
+Redis, Elasticsearch, Logstash, and Kibana. Adept in Git workflows,
+Agile/SCRUM, XP methodologies, and Test-Driven Development (TDD).
+Recognized for strong organizational skills, technical depth,
+self-motivation, and ability to thrive in dynamic environments.
+
+Experience Sapient Global Markets – Senior Associate Platform L-2 (Aug
+2017 – Present) Backend and full-stack development across financial,
+banking, and government domains. Designed and implemented large-scale
+microservices architectures on on-premise and public cloud platforms.
+Built serverless applications using AWS Lambda and API Gateway.
+Developed REST APIs with Spring Boot, Dropwizard, and Node.js. Worked
+with React, Node.js, MongoDB. Led migrations to AWS and GCP.
+
+Impetus – Senior Software Engineer (Feb 2016 – Jun 2017) Designed RBAC
+features, integrated enterprise RBAC systems, enabled Kerberos security
+on Hadoop clusters, implemented SSO and Spring Security. Worked with
+Elasticsearch for indexing and search.
+
+Crest – Software Developer, Scala/Play (Jan 2015 – Feb 2016) Enhanced
+applications built with Java, Scala, Play, MongoDB, and MarkLogic.
+Created Jade templated UI, wrote unit tests, optimized XML indexing,
+configured SBT, migrated systems to Cloud Foundry.
+
+Ameriprise Financial Services – Associate Technology (Nov 2013 – Jan
+2015) Developed REST APIs using OData and Apache CXF. Extensively used
+Akka actors. Built reusable modules for logging, security, caching,
+serialization, metrics, clustering, and pub-sub. Designed microservices
+architecture. Built Elasticsearch index curators. Implemented log
+management via ELK stack.
+
+SafeNet – Associate Software Engineer (Jul 2012 – Nov 2013) Worked
+across full SDLC. Developed Java applications using multithreading,
+collections, generics, serialization. Built Spring MVC/Hibernate
+applications and REST services. Used Log4j, Jira, and Agile practices.
+
+Internship (Jan 2012 – Jun 2012) Developed automated test frameworks in
+Java for SOA/REST services.
+
+Education Guru Gobind Singh Indraprastha University – MCA Computer
+Science (2009–2012) University of Delhi – B.Sc (Hons) Computer Science
+(2006–2009) Kendriya Vidyalaya Janakpuri – High School, Science
+(2002–2006)
+
+Skills Java, Scala, Node.js, React.js, Spring Framework, Spring Boot,
+Microservices, REST APIs, Docker, Kubernetes, Redis, Consul,
+Elasticsearch, GCP, AWS, Messaging (Pub/Sub)
+
+Languages English (Full Professional), Hindi (Professional Working),
+Bengali (Native)
+
+Certifications Google Cloud Certified Professional Cloud Architect GCP
+Essentials, GCP Core Infrastructure, Kubernetes Engine, HTML5/JS/CSS3
+Programming

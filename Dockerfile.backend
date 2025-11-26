@@ -1,0 +1,26 @@
+# Use a lightweight Node.js image
+FROM node:20-slim
+
+# Set the working directory inside the container
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json (if available)
+COPY package*.json ./
+
+# Install build tools for native addons
+RUN apt-get update && apt-get install -y build-essential python3 curl
+
+# Install dependencies
+RUN npm install
+
+# Copy the server code
+COPY server.js .
+
+# Copy the data directory
+COPY data ./data
+
+# Expose the port the app runs on
+EXPOSE 3000
+
+# The command to run the application
+CMD [ "node", "server.js" ]

@@ -1,0 +1,19 @@
+{
+  "name": "amitmula.com-backend",
+  "version": "1.0.0",
+  "description": "Backend service to connect to Ollama.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@langchain/community": "0.2.26",
+    "@langchain/core": "1.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "hnswlib-node": "3.0.0",
+    "@langchain/textsplitters": "0.0.1"
+  }
+}
