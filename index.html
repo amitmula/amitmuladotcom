@@ -98,18 +98,37 @@
             </div>
             
             <!-- Input Prompt Area (Fixed for Alignment) -->
-            <div class="flex items-baseline mt-2"> 
+            <div class="flex items-center mt-2"> 
                 <!-- Prompt parts are kept simple and inline -->
-                <span class="prompt">guest@amitmula.com</span>
-                <span class="text-gray-400">:</span>
-                <span class="path">~</span>
-                <span class="text-gray-400 mr-2">$</span> <!-- Added mr-2 for spacing before input -->
+                <div class="flex items-baseline">
+                    <span class="prompt">guest@amitmula.com</span>
+                    <span class="text-gray-400">:</span>
+                    <span class="path">~</span>
+                    <span class="text-gray-400 mr-2">$</span> <!-- Added mr-2 for spacing before input -->
+                </div>
                 
                 <input
                     type="text"
                     id="command-input"
                     class="flex-1"
                 />
+                
+                <!-- Speech Recognition Status -->
+                <div id="speech-status" class="mx-2 text-gray-500 text-sm italic hidden"></div>
+
+                <!-- Microphone Button -->
+                <button id="microphone-button" class="ml-2 p-1 rounded-full hover:bg-[#30363D] focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 01-4-4V6a4 4 0 014-4v0a4 4 0 014 4v2a4 4 0 01-4 4z" />
+                    </svg>
+                </button>
+
+                <!-- TTS Toggle Button -->
+                <button id="tts-toggle-button" class="ml-2 p-1 rounded-full hover:bg-[#30363D] focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.647 11 4.1 11 5v14c0 .9-.077 1.353-.293 1.573L5.586 15z" />
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
@@ -158,6 +177,7 @@
         }
 
         // --- AI Backend Function ---
+        let ttsBuffer = ''; // Buffer for assembling TTS sentences
         async function callAI(prompt) {
             // Create a container for the AI's streaming response
             const responseContainer = document.createElement('div');
@@ -168,6 +188,8 @@
             responseContainer.innerHTML = '<p>🧠 Thinking...</p>';
             scrollToBottom();
 
+            ttsBuffer = ''; // Clear the buffer for each new prompt
+
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -177,7 +199,9 @@
 
                 if (!response.ok || !response.body) {
                     const errorText = await response.text();
-                    responseContainer.innerHTML = `<p class="text-red-400">Error: ${escapeHtml(errorText) || response.statusText}</p>`;
+                    const errorMessage = `Error: ${escapeHtml(errorText) || response.statusText}`;
+                    responseContainer.innerHTML = `<p class="text-red-400">${errorMessage}</p>`;
+                    speak(errorMessage);
                     return;
                 }
                 
@@ -202,15 +226,30 @@
                             try {
                                 const chunk = JSON.parse(jsonStr);
                                 if (chunk.response) {
-                                    const textNode = document.createTextNode(chunk.response);
+                                    const text = chunk.response;
+                                    // Add to UI
+                                    const textNode = document.createTextNode(text);
                                     responseContainer.appendChild(textNode);
                                     scrollToBottom();
+                                    
+                                    // Buffer for speech
+                                    if (ttsEnabled) {
+                                        ttsBuffer += text;
+                                        // Check for complete sentences to speak
+                                        const sentenceEnd = ttsBuffer.search(/[.!?]/);
+                                        if (sentenceEnd !== -1) {
+                                            const sentence = ttsBuffer.substring(0, sentenceEnd + 1);
+                                            ttsBuffer = ttsBuffer.substring(sentenceEnd + 1);
+                                            speak(sentence.trim());
+                                        }
+                                    }
                                 }
                                 if (chunk.error) {
                                     const errorNode = document.createElement('p');
                                     errorNode.className = 'text-red-400';
                                     errorNode.innerText = chunk.error;
                                     responseContainer.appendChild(errorNode);
+                                    speak(`An error occurred: ${chunk.error}`);
                                 }
                             } catch (e) {
                                 console.error('Failed to parse JSON chunk:', jsonStr);
@@ -221,8 +260,15 @@
                 }
             } catch (error) {
                 console.error('Error calling AI service:', error);
-                responseContainer.innerHTML = '<p class="text-red-400">Error: Could not connect to the AI service. Is it running?</p>';
+                const errorMessage = 'Error: Could not connect to the AI service. Is it running?';
+                responseContainer.innerHTML = `<p class="text-red-400">${errorMessage}</p>`;
+                speak(errorMessage);
             } finally {
+                // Speak any remaining text in the buffer
+                if (ttsEnabled && ttsBuffer.length > 0) {
+                    speak(ttsBuffer.trim());
+                    ttsBuffer = ''; // Clear buffer
+                }
                 scrollToBottom();
             }
         }
@@ -231,13 +277,16 @@
             outputContainer.innerHTML = `
                 <div class="mb-4">
                     <div class="text-xl sm:text-2xl font-bold text-green-400">Welcome to Amit Mula's Interactive website</div>
-                    <p class="mt-2">Hello! I'm Gigo, AI assistant for Amit's website.</p>
+                    <p class="mt-2">Hello! I'm Giro, AI assistant for Amit's website.</p>
                     <p>I can help you learn more about Amit. if you will ask me something about Amit, I will speed-read Amit's documents (his professional life, mostly) and craft an answer for you using my AI brain, while strictly sticking to facts.</p>
                     <br>
                     <p>This terminal is my face! It sends your messages to my Node.js 'brain.' We're all bundled up in Docker containers,
   and I chat with a powerful Ollama AI model to help me think. It's a whole tech party! Not yet impressed? Just type your question below and press Enter!</p>
                 </div>
             `;
+            if (ttsEnabled) {
+                speak("Welcome to Amit Mula's Interactive website. Hello! I'm Giro, AI assistant for Amit's website. I can help you learn more about Amit. Just type your question below and press Enter!");
+            }
         }
         
         function scrollToBottom() {
@@ -257,7 +306,126 @@
         window.onload = () => {
             showWelcomeMessage();
             commandInput.focus();
+            initializeSpeechRecognition(); // Initialize speech recognition on load
+            initializeTextToSpeech(); // Initialize text-to-speech on load
         };
+
+        // --- Speech Recognition ---
+        const microphoneButton = document.getElementById('microphone-button');
+        const microphoneSvg = microphoneButton.querySelector('svg');
+        const speechStatus = document.getElementById('speech-status');
+        let recognition;
+        let isListening = false;
+
+        function initializeSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                speechStatus.textContent = "Speech Recognition Not Supported";
+                microphoneButton.disabled = true;
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false; // Only get a single result
+            recognition.interimResults = false; // Don't show interim results
+            recognition.lang = 'en-US'; // Set language
+
+            recognition.onstart = () => {
+                isListening = true;
+                speechStatus.textContent = "Listening...";
+                speechStatus.classList.remove('hidden');
+                microphoneButton.classList.add('bg-green-400');
+                microphoneSvg.classList.add('text-white');
+                microphoneSvg.classList.remove('text-gray-400');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                commandInput.value = transcript;
+                speechStatus.textContent = "Processing...";
+                // After getting the result, we can either automatically submit or let the user press Enter.
+                // For now, just populate the input. Integration with chat submission will be a separate step.
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                speechStatus.textContent = `Error: ${event.error}`;
+                speechStatus.classList.remove('hidden');
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                speechStatus.classList.add('hidden');
+                microphoneButton.classList.remove('bg-green-400');
+                microphoneSvg.classList.remove('text-white');
+                microphoneSvg.classList.add('text-gray-400');
+                if (commandInput.value) {
+                    // Automatically submit if there's a transcript
+                    const prompt = commandInput.value.trim();
+                    commandInput.value = ''; // Clear input immediately
+                    appendUserPrompt(prompt);
+                    callAI(prompt);
+                    scrollToBottom();
+                }
+            };
+
+            microphoneButton.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    commandInput.value = ''; // Clear input before listening
+                    recognition.start();
+                }
+            });
+        }
+        
+        // --- Text-to-Speech ---
+        const ttsToggleButton = document.getElementById('tts-toggle-button');
+        const ttsSvg = ttsToggleButton.querySelector('svg');
+        let ttsEnabled = false; // Default to off
+
+        function speak(text) {
+            if (ttsEnabled) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function initializeTextToSpeech() {
+            if (!('speechSynthesis' in window)) {
+                ttsToggleButton.disabled = true;
+                console.warn("Text-to-Speech Not Supported");
+                return;
+            }
+
+            ttsToggleButton.addEventListener('click', () => {
+                ttsEnabled = !ttsEnabled;
+                if (ttsEnabled) {
+                    ttsToggleButton.classList.add('bg-green-400');
+                ttsSvg.classList.add('text-white');
+                ttsSvg.classList.remove('text-gray-400');
+                    // Optionally speak a confirmation
+                    speak("Text to speech enabled.");
+                } else {
+                ttsToggleButton.classList.remove('bg-green-400');
+                ttsSvg.classList.remove('text-white');
+                ttsSvg.classList.add('text-gray-400');
+                    // Stop any ongoing speech
+                    speechSynthesis.cancel();
+                    // Optionally speak a confirmation
+                    console.log("Text to speech disabled.");
+                }
+            });
+            // Update button style on initial load based on ttsEnabled
+            if (ttsEnabled) {
+                ttsToggleButton.classList.add('bg-green-400');
+                ttsSvg.classList.add('text-white');
+                ttsSvg.classList.remove('text-gray-400');
+            } else {
+                ttsToggleButton.classList.remove('bg-green-400');
+                ttsSvg.classList.remove('text-white');
+                ttsSvg.classList.add('text-gray-400');
+            }
+        }
     </script>
 
 </body>

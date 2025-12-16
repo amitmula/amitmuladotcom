@@ -1,2 +1,6 @@
 hnswlib_index
 node_modules
+.continue
+context.md
+rag_text
+no_rag_txt

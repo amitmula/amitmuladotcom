@@ -1,7 +1,0 @@
-My name is Amit Mula, and I am a software engineer specializing in the design and development of scalable, high-performance applications. I have deep expertise in Java, the Spring ecosystem, Node.js, React.js, and cloud platforms such as AWS and Google Cloud.
-
-I have a strong passion for exploring emerging tools, frameworks, and technologies to build practical, impactful solutions—often with a focus on delivering clean, intuitive user experiences. I am currently seeking opportunities and projects that allow me to advance my skills in AI and cloud-native architectures.
-
-I am also developing a personal AI lab on my home server to integrate intelligent automation into my home-automation workflows.
-
-You can reach me at consult@amitmula.com

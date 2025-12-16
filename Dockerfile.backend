@@ -17,7 +17,8 @@ RUN npm install
 COPY server.js .
 
 # Copy the data directory
-COPY data ./data
+COPY rag_text/*.txt ./rag_text/
+COPY rag_text/*.md ./rag_text/
 
 # Expose the port the app runs on
 EXPOSE 3000
